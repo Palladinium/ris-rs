@@ -17,7 +17,7 @@ use regex::Regex;
 ///
 /// See [crate::Entry] for more information.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct RIS(Vec<Entry>);
+pub struct RIS(pub Vec<Entry>);
 
 impl FromStr for RIS {
     type Err = ParseError;
