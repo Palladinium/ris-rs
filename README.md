@@ -19,7 +19,7 @@ A simple [RIS bibliography file](https://en.wikipedia.org/wiki/RIS_%28file_forma
   - [x] To `Write`
 - [ ] Extensive test coverage
 - [ ] Tested on bibliography managers
-  - [x] Mendeley (1.19.5)
+  - [ ] Mendeley
   - [ ] Zotero
   - [ ] Citavi
   - [ ] EndNote
