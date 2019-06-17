@@ -859,6 +859,7 @@ impl PublicationDate {
     }
 }
 
+/// An error occurring during the parsing of a publication date
 pub struct ParseDateError;
 
 impl FromStr for PublicationDate {
