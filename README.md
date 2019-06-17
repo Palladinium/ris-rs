@@ -7,7 +7,7 @@
 [![Crate](https://img.shields.io/crates/v/ris.svg)](https://crates.io/crates/ris)
 [![Docs](https://docs.rs/ris/badge.svg)](https://docs.rs/ris)
 
-A simple [https://en.wikipedia.org/wiki/RIS_(file_format)](RIS bibliography file) (de)serializer for Rust.
+A simple [https://en.wikipedia.org/wiki/RIS_%28file_format%29](RIS bibliography file) (de)serializer for Rust.
 
 # Features
 
