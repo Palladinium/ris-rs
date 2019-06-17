@@ -1,6 +1,6 @@
 # RIS
 
-[![https://travis-ci.com/Palladinium/ris.svg?branch=master]](https://travis-ci.com/Palladinium/ris)
+[![https://travis-ci.com/Palladinium/ris-rs.svg?branch=master]](https://travis-ci.com/Palladinium/ris-rs)
 [![Crate](https://img.shields.io/crates/v/ris.svg)](https://crates.io/crates/ris)
 [![Docs](https://docs.rs/ris/badge.svg)](https://docs.rs/ris)
 
