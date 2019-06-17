@@ -34,12 +34,9 @@ impl FromStr for RIS {
         for line in s.lines() {
             line_no += 1;
 
-            match current_entry.parse_line(line, line_no)? {
-                ParseState::End => {
-                    entries.push(current_entry.entry.unwrap());
-                    current_entry = PartialEntry::new();
-                }
-                _ => {}
+            if current_entry.parse_line(line, line_no)? == ParseState::End {
+                entries.push(current_entry.entry.unwrap());
+                current_entry = PartialEntry::new();
             }
         }
 
@@ -189,7 +186,7 @@ impl PartialEntry {
             ParseState::End => return Err(ParseError::new(line_no, TagOutsideEntry)),
         }
 
-        return Ok(self.state);
+        Ok(self.state)
     }
 }
 
