@@ -58,9 +58,12 @@ struct PartialEntry {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ParseState {
-    Start,      // Before TY
-    InProgress, // After TY and before ER
-    End,        // After ER
+    /// Before TY
+    Start,
+    /// After TY and before ER
+    InProgress,
+    /// After ER
+    End,
 }
 
 impl PartialEntry {
