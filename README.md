@@ -28,8 +28,9 @@ A simple [RIS bibliography file](https://en.wikipedia.org/wiki/RIS_%28file_forma
 
 PRs and issues are welcome!
 
-Please ensure the following before submitting a PR:
+Please ensure all of the following for PRs, or mark them as WIP:
 - New features have some test coverage
+- All `pub` functions and structs are documented
 - All tests pass
 - No compiler warnings
 - Formatted according to `rustfmt`
