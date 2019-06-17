@@ -16,7 +16,7 @@ use regex::Regex;
 /// This type implements [std::fmt::Display] and [std::str::FromStr] to (de)serialize to/from strings.
 ///
 /// See [crate::Entry] for more information.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RIS(Vec<Entry>);
 
 impl FromStr for RIS {
@@ -263,7 +263,7 @@ impl Display for RIS {
 ///
 /// Some bibliography systems may resolve a journal abbreviation (`JA/J2`) as a standard abbreviated name for a journal, and automatically populate `T2` with the full journal name.
 /// This behaviour is not implemented as I could only find inconsistent documentation for it.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Entry {
     reference_type: ReferenceType, // TY
 
@@ -506,7 +506,7 @@ fn write_tags<T: Display>(f: &mut Formatter, tag: &str, field: &[T]) -> fmt::Res
 /// | THES         | `ThesisOrDissertation`  |
 /// | UNPB         | `UnpublishedWork`       |
 /// | VIDEO        | `VideoRecording`        |
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ReferenceType {
     Abstract,
     AudiovisualMaterial,
@@ -712,7 +712,7 @@ impl Display for ReferenceType {
 /// - `1998/03//`
 /// - `1998///someotherinfo`
 /// - `2001`
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicationDate {
     pub year: i32,
     pub month: Option<i32>,
