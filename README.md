@@ -36,4 +36,4 @@ Please ensure the following before submitting a PR:
 
 # License
 
-Waddle is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+ris-rs is licensed under the [MIT License](https://opensource.org/licenses/MIT).
