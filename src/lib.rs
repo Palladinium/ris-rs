@@ -26,101 +26,129 @@ impl FromStr for RIS {
     /// See [Entry](crate::Entry) for more information on how keys are mapped to fields.
     fn from_str(s: &str) -> Result<RIS, Self::Err> {
         use ParseErrorKind::*;
-        use ReferenceType::*;
 
         let mut entries = Vec::new();
-        let mut current_entry: Option<CurrentEntry> = None;
+        let mut line_no = 0;
+        let mut current_entry: PartialEntry = PartialEntry::new();
 
-        for (line_no, line) in s.lines().enumerate() {
-            let line_no = line_no + 1;
+        for line in s.lines() {
+            line_no += 1;
 
-            lazy_static! {
-                static ref LINE_RE: Regex = Regex::new("([A-Z][A-Z0-9])  - (.*)").unwrap();
+            match current_entry.parse_line(line, line_no)? {
+                ParseState::End => {
+                    entries.push(current_entry.entry.unwrap());
+                    current_entry = PartialEntry::new();
+                }
+                _ => {}
             }
+        }
 
-            let matches = LINE_RE
-                .captures(line)
-                .ok_or_else(|| ParseError::new(line_no, InvalidLine))?;
+        if current_entry.state == ParseState::InProgress {
+            Err(ParseError::new(line_no, UnterminatedEntry))
+        } else {
+            Ok(RIS(entries))
+        }
+    }
+}
 
-            let key = matches.get(1).unwrap().as_str();
-            let value = matches.get(2).unwrap().as_str();
+struct PartialEntry {
+    entry: Option<Entry>,
+    state: ParseState,
+}
 
-            match current_entry.as_mut() {
-                Some(CurrentEntry { entry, .. }) => match key {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ParseState {
+    Start,      // Before TY
+    InProgress, // After TY and before ER
+    End,        // After ER
+}
+
+impl PartialEntry {
+    fn new() -> Self {
+        Self {
+            entry: None,
+            state: ParseState::Start,
+        }
+    }
+
+    fn parse_line(&mut self, line: &str, line_no: usize) -> Result<ParseState, ParseError> {
+        use ParseErrorKind::*;
+        use ReferenceType::*;
+
+        lazy_static! {
+            static ref LINE_RE: Regex = Regex::new("([A-Z][A-Z0-9])  - (.*)").unwrap();
+        }
+
+        let matches = LINE_RE
+            .captures(line)
+            .ok_or_else(|| ParseError::new(line_no, InvalidLine))?;
+
+        let key = matches.get(1).unwrap().as_str();
+        let value = matches.get(2).unwrap().as_str();
+
+        match self.state {
+            ParseState::Start => {
+                if key == "TY" {
+                    self.state = ParseState::InProgress;
+                    self.entry = Some(Entry::new(value.parse().unwrap()));
+                } else {
+                    return Err(ParseError::new(line_no, UnterminatedEntry));
+                }
+            }
+            ParseState::InProgress => {
+                let entry = self.entry.as_mut().unwrap();
+
+                match key {
                     "TY" => return Err(ParseError::new(line_no, UnterminatedEntry)),
 
-                    "ID" => set_unique_field(&mut entry.id, String::from(value), line_no)?,
+                    "ID" => set_unique_field(&mut entry.id, value, line_no)?,
 
-                    "T1" | "TI" => {
-                        set_unique_field(&mut entry.title, String::from(value), line_no)?
-                    }
-                    "T2" => {
-                        set_unique_field(&mut entry.secondary_title, String::from(value), line_no)?
-                    }
-                    "T3" => {
-                        set_unique_field(&mut entry.tertiary_title, String::from(value), line_no)?
-                    }
+                    "T1" | "TI" => set_unique_field(&mut entry.title, value, line_no)?,
+                    "T2" => set_unique_field(&mut entry.secondary_title, value, line_no)?,
+                    "T3" => set_unique_field(&mut entry.tertiary_title, value, line_no)?,
 
                     "A1" | "AU" => entry.authors.push(String::from(value)),
                     "A2" | "ED" => entry.secondary_authors.push(String::from(value)),
                     "A3" => entry.tertiary_authors.push(String::from(value)),
 
-                    "Y1" | "PY" => set_unique_field(
-                        &mut entry.primary_date,
-                        PublicationDate::parse(value, line_no)?,
-                        line_no,
-                    )?,
-                    "Y2" => set_unique_field(
-                        &mut entry.secondary_date,
-                        PublicationDate::parse(value, line_no)?,
-                        line_no,
-                    )?,
+                    "Y1" | "PY" => set_unique_field(&mut entry.primary_date, value, line_no)?,
+                    "Y2" => set_unique_field(&mut entry.secondary_date, value, line_no)?,
 
-                    "N1" => set_unique_field(&mut entry.notes, String::from(value), line_no)?,
+                    "N1" => set_unique_field(&mut entry.notes, value, line_no)?,
 
-                    "AB" | "N2" => {
-                        set_unique_field(&mut entry.abstract_, String::from(value), line_no)?
-                    }
+                    "AB" | "N2" => set_unique_field(&mut entry.abstract_, value, line_no)?,
                     "KW" => entry.keywords.push(String::from(value)),
-                    "RP" => set_unique_field(&mut entry.reprint, String::from(value), line_no)?,
-                    "AV" => {
-                        set_unique_field(&mut entry.availability, String::from(value), line_no)?
-                    }
+                    "RP" => set_unique_field(&mut entry.reprint, value, line_no)?,
+                    "AV" => set_unique_field(&mut entry.availability, value, line_no)?,
 
-                    "SP" => set_unique_field(&mut entry.start_page, String::from(value), line_no)?,
-                    "EP" => set_unique_field(&mut entry.end_page, String::from(value), line_no)?,
+                    "CA" => set_unique_field(&mut entry.caption, value, line_no)?,
+                    "CN" => set_unique_field(&mut entry.call_number, value, line_no)?,
+                    "DO" => set_unique_field(&mut entry.doi, value, line_no)?,
 
-                    "JF" | "JO" => {
-                        set_unique_field(&mut entry.journal, String::from(value), line_no)?
-                    }
-                    "JA" => {
-                        set_unique_field(&mut entry.journal_abbrev, String::from(value), line_no)?
-                    }
-                    "J1" => {
-                        set_unique_field(&mut entry.journal_abbrev_1, String::from(value), line_no)?
-                    }
-                    "J2" => {
-                        set_unique_field(&mut entry.journal_abbrev_2, String::from(value), line_no)?
-                    }
+                    "SP" => set_unique_field(&mut entry.start_page, value, line_no)?,
+                    "EP" => set_unique_field(&mut entry.end_page, value, line_no)?,
 
-                    "VL" => set_unique_field(&mut entry.volume, String::from(value), line_no)?,
-                    "IS" => set_unique_field(&mut entry.issue, String::from(value), line_no)?,
-                    "CY" => set_unique_field(&mut entry.city, String::from(value), line_no)?,
-                    "PB" => set_unique_field(&mut entry.publisher, String::from(value), line_no)?,
-                    "SN" => {
-                        set_unique_field(&mut entry.serial_number, String::from(value), line_no)?
-                    }
-                    "AD" => set_unique_field(&mut entry.address, String::from(value), line_no)?,
+                    "JF" | "JO" => set_unique_field(&mut entry.journal, value, line_no)?,
+                    "JA" => set_unique_field(&mut entry.journal_abbrev, value, line_no)?,
+                    "J1" => set_unique_field(&mut entry.journal_abbrev_1, value, line_no)?,
+                    "J2" => set_unique_field(&mut entry.journal_abbrev_2, value, line_no)?,
 
-                    "U1" => set_unique_field(&mut entry.user_1, String::from(value), line_no)?,
-                    "U2" => set_unique_field(&mut entry.user_2, String::from(value), line_no)?,
-                    "U3" => set_unique_field(&mut entry.user_3, String::from(value), line_no)?,
-                    "U4" => set_unique_field(&mut entry.user_4, String::from(value), line_no)?,
-                    "U5" => set_unique_field(&mut entry.user_5, String::from(value), line_no)?,
+                    "VL" => set_unique_field(&mut entry.volume, value, line_no)?,
+                    "IS" => set_unique_field(&mut entry.issue, value, line_no)?,
+                    "CY" => set_unique_field(&mut entry.city, value, line_no)?,
+                    "PB" => set_unique_field(&mut entry.publisher, value, line_no)?,
+                    "SN" => set_unique_field(&mut entry.serial_number, value, line_no)?,
+                    "AD" => set_unique_field(&mut entry.address, value, line_no)?,
 
-                    "M1" => set_unique_field(&mut entry.misc_1, String::from(value), line_no)?,
-                    "M2" => set_unique_field(&mut entry.misc_2, String::from(value), line_no)?,
-                    "M3" => set_unique_field(&mut entry.misc_3, String::from(value), line_no)?,
+                    "U1" => set_unique_field(&mut entry.user_1, value, line_no)?,
+                    "U2" => set_unique_field(&mut entry.user_2, value, line_no)?,
+                    "U3" => set_unique_field(&mut entry.user_3, value, line_no)?,
+                    "U4" => set_unique_field(&mut entry.user_4, value, line_no)?,
+                    "U5" => set_unique_field(&mut entry.user_5, value, line_no)?,
+
+                    "M1" => set_unique_field(&mut entry.misc_1, value, line_no)?,
+                    "M2" => set_unique_field(&mut entry.misc_2, value, line_no)?,
+                    "M3" => set_unique_field(&mut entry.misc_3, value, line_no)?,
 
                     "BT" => {
                         let field = match entry.reference_type {
@@ -128,12 +156,12 @@ impl FromStr for RIS {
                             _ => &mut entry.secondary_title,
                         };
 
-                        set_unique_field(field, String::from(value), line_no)?;
+                        set_unique_field(field, value, line_no)?;
                     }
 
                     "ER" => {
                         if value.is_empty() {
-                            entries.push(current_entry.take().unwrap().entry);
+                            self.state = ParseState::End;
                         } else {
                             return Err(ParseError::new(line_no, InvalidLine));
                         }
@@ -142,25 +170,45 @@ impl FromStr for RIS {
                     _ => {
                         return Err(ParseError::new(line_no, InvalidKey));
                     }
-                },
-                None => match key {
-                    "TY" => {
-                        current_entry = Some(CurrentEntry {
-                            entry: Entry::new(value.parse().unwrap()),
-                            start_line_no: line_no,
-                        })
-                    }
-
-                    _ => return Err(ParseError::new(line_no, InvalidKey))?,
-                },
+                }
             }
+            ParseState::End => return Err(ParseError::new(line_no, TagOutsideEntry)),
         }
 
-        if let Some(current) = current_entry {
-            Err(ParseError::new(current.start_line_no, UnterminatedEntry))
-        } else {
-            Ok(RIS(entries))
-        }
+        return Ok(self.state);
+    }
+}
+
+#[inline(always)]
+fn set_unique_field<T>(field: &mut Option<T>, value: &str, line_no: usize) -> Result<(), ParseError>
+where
+    T: FromStr,
+    ParseErrorKind: From<T::Err>,
+{
+    if field.is_some() {
+        Err(ParseError::new(line_no, ParseErrorKind::DuplicateField))
+    } else {
+        *field = Some(
+            value
+                .parse()
+                .map_err(|e: T::Err| ParseError::new(line_no, e.into()))?,
+        );
+        Ok(())
+    }
+}
+
+// FIXME Once `!` is stabilized, this conversion should be unnecessary
+#[doc(hidden)]
+impl From<std::convert::Infallible> for ParseErrorKind {
+    fn from(_: std::convert::Infallible) -> Self {
+        panic!();
+    }
+}
+
+#[doc(hidden)]
+impl From<ParseDateError> for ParseErrorKind {
+    fn from(_: ParseDateError) -> Self {
+        ParseErrorKind::InvalidDate
     }
 }
 
@@ -226,6 +274,8 @@ impl Display for RIS {
 /// | `M1` | `misc_1`           | [String]          |
 /// | `M2` | `misc_2`           | [String]          |
 /// | `M3` | `misc_3`           | [String]          |
+/// | `CA` | `caption`          | [String]          |
+/// | `CN` | `call_number`      | [String]          |
 ///
 /// Some fields are `Vec`s, and the corresponding keys are allowed to appear multiple times:
 ///
@@ -286,6 +336,9 @@ pub struct Entry {
     pub keywords: Vec<String>,        // KW
     pub reprint: Option<String>,      // RP
     pub availability: Option<String>, // AV
+    pub caption: Option<String>,      // CA
+    pub call_number: Option<String>,  // CN
+    pub doi: Option<String>,          // DO
 
     pub start_page: Option<String>, // SP
     pub end_page: Option<String>,   // EP
@@ -337,6 +390,9 @@ impl Entry {
             keywords: Vec::new(),
             reprint: None,
             availability: None,
+            caption: None,
+            call_number: None,
+            doi: None,
 
             start_page: None,
             end_page: None,
@@ -366,6 +422,26 @@ impl Entry {
     }
 }
 
+impl FromStr for Entry {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut partial = PartialEntry::new();
+        let mut line_no = 0;
+
+        for line in s.lines() {
+            line_no += 1;
+            partial.parse_line(line, line_no)?;
+        }
+
+        if partial.state == ParseState::End {
+            Ok(partial.entry.unwrap())
+        } else {
+            Err(ParseError::new(line_no, ParseErrorKind::UnterminatedEntry))
+        }
+    }
+}
+
 impl Display for Entry {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         writeln!(f, "TY  - {}", &self.reference_type)?;
@@ -390,6 +466,9 @@ impl Display for Entry {
 
         write_tag(f, "RP", &self.reprint)?;
         write_tag(f, "AV", &self.availability)?;
+        write_tag(f, "CA", &self.caption)?;
+        write_tag(f, "CN", &self.call_number)?;
+        write_tag(f, "DO", &self.doi)?;
 
         write_tag(f, "SP", &self.start_page)?;
         write_tag(f, "EP", &self.end_page)?;
@@ -734,10 +813,6 @@ impl PublicationDate {
             other_info,
         }
     }
-
-    fn parse(s: &str, line_no: usize) -> Result<Self, ParseError> {
-        Self::from_str(s).map_err(|_| ParseError::new(line_no, ParseErrorKind::InvalidDate))
-    }
 }
 
 pub struct ParseDateError;
@@ -819,15 +894,18 @@ impl ParseError {
 
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        use ParseErrorKind::*;
-
         match self.kind {
-            UnterminatedEntry => write!(f, "Unterminated entry started at line {}", self.line_no),
-            InvalidKey => write!(f, "Invalid key at line {}", self.line_no),
-            InvalidLine => write!(f, "Invalid line format at line {}", self.line_no),
-            DuplicateField => write!(f, "Duplicate fields at line {}", self.line_no),
-            InvalidDate => write!(f, "Invalid date format at line {}", self.line_no),
-        }
+            ParseErrorKind::TagOutsideEntry => write!(f, "Tag outside entry"),
+            ParseErrorKind::UnterminatedEntry => write!(f, "Unterminated entry"),
+            ParseErrorKind::InvalidKey => write!(f, "Invalid key"),
+            ParseErrorKind::InvalidLine => write!(f, "Invalid line format"),
+            ParseErrorKind::DuplicateField => write!(f, "Duplicate field"),
+            ParseErrorKind::InvalidDate => write!(f, "Invalid date format"),
+        }?;
+
+        write!(f, " at line {}", self.line_no)?;
+
+        Ok(())
     }
 }
 
@@ -836,7 +914,9 @@ impl std::error::Error for ParseError {}
 /// The kind of an error occurring during the parsing of a RIS file.
 #[derive(Debug, Clone, Copy)]
 pub enum ParseErrorKind {
-    /// An entry started by `TY` was not terminated by `ER` before another `TY` or EOF was encontered.
+    /// A tag other than `TY` was present outside of an entry.
+    TagOutsideEntry,
+    /// An entry was not terminated by an `ER` tag.
     UnterminatedEntry,
     /// An invalid key was encountered.
     InvalidKey,
@@ -846,20 +926,6 @@ pub enum ParseErrorKind {
     DuplicateField,
     /// A date field was not in the `YYYY/MM/DD/otherinfo` format.
     InvalidDate,
-}
-
-struct CurrentEntry {
-    entry: Entry,
-    start_line_no: usize,
-}
-
-fn set_unique_field<T>(field: &mut Option<T>, value: T, line_no: usize) -> Result<(), ParseError> {
-    if field.is_some() {
-        Err(ParseError::new(line_no, ParseErrorKind::DuplicateField))
-    } else {
-        *field = Some(value);
-        Ok(())
-    }
 }
 
 #[cfg(test)]
