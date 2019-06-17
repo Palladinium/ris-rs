@@ -114,7 +114,9 @@ impl PartialEntry {
                     "A2" | "ED" => entry.secondary_authors.push(String::from(value)),
                     "A3" => entry.tertiary_authors.push(String::from(value)),
 
-                    "Y1" | "PY" => set_unique_field(&mut entry.primary_date, value, line_no)?,
+                    "Y1" | "PY" | "DA" => {
+                        set_unique_field(&mut entry.primary_date, value, line_no)?
+                    }
                     "Y2" => set_unique_field(&mut entry.secondary_date, value, line_no)?,
 
                     "N1" => set_unique_field(&mut entry.notes, value, line_no)?,
@@ -148,6 +150,15 @@ impl PartialEntry {
                     "U3" => set_unique_field(&mut entry.user_3, value, line_no)?,
                     "U4" => set_unique_field(&mut entry.user_4, value, line_no)?,
                     "U5" => set_unique_field(&mut entry.user_5, value, line_no)?,
+
+                    "C1" => set_unique_field(&mut entry.custom_1, value, line_no)?,
+                    "C2" => set_unique_field(&mut entry.custom_2, value, line_no)?,
+                    "C3" => set_unique_field(&mut entry.custom_3, value, line_no)?,
+                    "C4" => set_unique_field(&mut entry.custom_4, value, line_no)?,
+                    "C5" => set_unique_field(&mut entry.custom_5, value, line_no)?,
+                    "C6" => set_unique_field(&mut entry.custom_6, value, line_no)?,
+                    "C7" => set_unique_field(&mut entry.custom_7, value, line_no)?,
+                    "C8" => set_unique_field(&mut entry.custom_8, value, line_no)?,
 
                     "M1" => set_unique_field(&mut entry.misc_1, value, line_no)?,
                     "M2" => set_unique_field(&mut entry.misc_2, value, line_no)?,
@@ -258,6 +269,9 @@ impl Display for RIS {
 /// | `N2` | `abstract_`        | [String]          |
 /// | `RP` | `reprint`          | [String]          |
 /// | `AV` | `availability`     | [String]          |
+/// | `CA` | `caption`          | [String]          |
+/// | `CN` | `call_number`      | [String]          |
+/// | `DO` | `doi`              | [String]          |
 /// | `SP` | `start_page`       | [String]          |
 /// | `EP` | `end_page`         | [String]          |
 /// | `JA` | `journal_abbrev`   | [String]          |
@@ -274,11 +288,14 @@ impl Display for RIS {
 /// | `U3` | `user_3`           | [String]          |
 /// | `U4` | `user_4`           | [String]          |
 /// | `U5` | `user_5`           | [String]          |
+/// | `C1` | `custom_1`         | [String]          |
+/// | `C2` | `custom_2`         | [String]          |
+/// | `C3` | `custom_3`         | [String]          |
+/// | `C4` | `custom_4`         | [String]          |
+/// | `C5` | `custom_5`         | [String]          |
 /// | `M1` | `misc_1`           | [String]          |
 /// | `M2` | `misc_2`           | [String]          |
 /// | `M3` | `misc_3`           | [String]          |
-/// | `CA` | `caption`          | [String]          |
-/// | `CN` | `call_number`      | [String]          |
 ///
 /// Some fields are `Vec`s, and the corresponding keys are allowed to appear multiple times:
 ///
@@ -303,7 +320,7 @@ impl Display for RIS {
 /// | `A1` | `AU`       | `first_authors`   |
 /// | `A2` | `ED`       | `second_authors`  |
 /// | `T2` | `JF`, `JO` | `secondary_title` |
-/// | `Y1` | `PY`       | `primary_date`    |
+/// | `Y1` | `PY`, `DA` | `primary_date`    |
 /// | `N2` | `AB`       | `abstract_`       |
 ///
 /// Some synonims are mapped conditionally depending on the reference type `TY`:
@@ -330,7 +347,7 @@ pub struct Entry {
     pub secondary_authors: Vec<String>, // A2, ED
     pub tertiary_authors: Vec<String>,  // A3
 
-    pub primary_date: Option<PublicationDate>,   // PY, Y1
+    pub primary_date: Option<PublicationDate>, // PY, Y1, DA
     pub secondary_date: Option<PublicationDate>, // Y2
 
     pub notes: Option<String>, // N1
@@ -363,6 +380,15 @@ pub struct Entry {
     pub user_3: Option<String>, // U3
     pub user_4: Option<String>, // U4
     pub user_5: Option<String>, // U5
+
+    pub custom_1: Option<String>, // C1
+    pub custom_2: Option<String>, // C2
+    pub custom_3: Option<String>, // C3
+    pub custom_4: Option<String>, // C4
+    pub custom_5: Option<String>, // C5
+    pub custom_6: Option<String>, // C5
+    pub custom_7: Option<String>, // C5
+    pub custom_8: Option<String>, // C5
 
     pub misc_1: Option<String>, // M1
     pub misc_2: Option<String>, // M2
@@ -417,6 +443,15 @@ impl Entry {
             user_3: None,
             user_4: None,
             user_5: None,
+
+            custom_1: None,
+            custom_2: None,
+            custom_3: None,
+            custom_4: None,
+            custom_5: None,
+            custom_6: None,
+            custom_7: None,
+            custom_8: None,
 
             misc_1: None,
             misc_2: None,
@@ -493,6 +528,15 @@ impl Display for Entry {
         write_tag(f, "U3", &self.user_3)?;
         write_tag(f, "U4", &self.user_4)?;
         write_tag(f, "U5", &self.user_5)?;
+
+        write_tag(f, "U1", &self.custom_1)?;
+        write_tag(f, "U2", &self.custom_2)?;
+        write_tag(f, "U3", &self.custom_3)?;
+        write_tag(f, "U4", &self.custom_4)?;
+        write_tag(f, "U5", &self.custom_5)?;
+        write_tag(f, "U6", &self.custom_6)?;
+        write_tag(f, "U7", &self.custom_7)?;
+        write_tag(f, "U8", &self.custom_8)?;
 
         write_tag(f, "M1", &self.misc_1)?;
         write_tag(f, "M2", &self.misc_2)?;
