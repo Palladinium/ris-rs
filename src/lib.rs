@@ -13,9 +13,9 @@ use regex::Regex;
 /// A RIS file has no information other than the sequence of its entries, so this type is just a wrapper around `Vec<Entry>`,
 /// with associated functions for (de)serialization.
 ///
-/// This type implements [std::fmt::Display] and [std::str::FromStr] to (de)serialize to/from strings.
+/// This type implements [Display](std::fmt::Display) and (FromStr)[std::str::FromStr] to (de)serialize to/from strings.
 ///
-/// See [crate::Entry] for more information.
+/// See (Entry)[crate::Entry] for more information.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RIS(pub Vec<Entry>);
 
@@ -241,13 +241,13 @@ impl Display for RIS {
 
 /// A single entry in the RIS file, started by a `TY` and terminated by a `ER`.
 ///
-/// This type implements [std::fmt::Display] and [std::str::FromStr] to (de)serialize to/from strings.
-/// To (de)serialize files composed of multiple records, see [crate::RIS]
+/// This type implements (Display)[std::fmt::Display] and (FromStr)[std::str::FromStr] to (de)serialize to/from strings.
+/// To (de)serialize files composed of multiple records, see (RIS)[crate::RIS]
 ///
 /// # Field mappings
 ///
 /// All fields except `TY` are optional, and are stored as `Option`s.
-/// Repeated fields are invalid, and will cause a [crate::ParseError].
+/// Repeated fields are invalid, and will cause a (ParseError)[crate::ParseError].
 ///
 /// [ReferenceType]: crate::ReferenceType
 /// [String]: std::string::String
@@ -565,7 +565,7 @@ fn write_tags<T: Display>(f: &mut Formatter, tag: &str, field: &[T]) -> fmt::Res
 
 /// The type of a reference.
 ///
-/// This type implements [std::fmt::Display] and [std::str::FromStr] to (de)serialize to/from strings.
+/// This type implements (Display)[std::fmt::Display] and (FromStr)[std::str::FromStr] to (de)serialize to/from strings.
 ///
 /// # Abbreviations
 ///
@@ -827,7 +827,7 @@ impl Display for ReferenceType {
 ///
 /// The `year` field is mandatory, all the others are optional.
 ///
-/// This type implements [std::fmt::Display] and [std::str::FromStr] to (de)serialize to/from strings.
+/// This type implements (Display)[std::fmt::Display] and (FromStr)[std::str::FromStr] to (de)serialize to/from strings.
 ///
 /// Some examples of valid strings:
 /// - `1998///`
