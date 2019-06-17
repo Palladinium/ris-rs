@@ -1,4 +1,4 @@
-//! A simple [https://en.wikipedia.org/wiki/RIS_(file_format)](RIS bibliography file) (de)serializer for Rust.
+//! A simple [RIS bibliography file](https://en.wikipedia.org/wiki/RIS_%28file_format%29) (de)serializer for Rust.
 use std::{
     convert::Infallible,
     fmt::{self, Display, Formatter},
