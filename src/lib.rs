@@ -265,52 +265,52 @@ impl Display for RIS {
 /// This behaviour is not implemented as I could only find inconsistent documentation for it.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Entry {
-    reference_type: ReferenceType, // TY
+    pub reference_type: ReferenceType, // TY
 
-    id: Option<String>, // ID
+    pub id: Option<String>, // ID
 
-    title: Option<String>,           // T1, TI
-    secondary_title: Option<String>, // T2
-    tertiary_title: Option<String>,  // T3
+    pub title: Option<String>,           // T1, TI
+    pub secondary_title: Option<String>, // T2
+    pub tertiary_title: Option<String>,  // T3
 
-    authors: Vec<String>,           // AU, A1
-    secondary_authors: Vec<String>, // A2, ED
-    tertiary_authors: Vec<String>,  // A3
+    pub authors: Vec<String>,           // AU, A1
+    pub secondary_authors: Vec<String>, // A2, ED
+    pub tertiary_authors: Vec<String>,  // A3
 
-    primary_date: Option<PublicationDate>,   // PY, Y1
-    secondary_date: Option<PublicationDate>, // Y2
+    pub primary_date: Option<PublicationDate>,   // PY, Y1
+    pub secondary_date: Option<PublicationDate>, // Y2
 
-    notes: Option<String>, // N1
+    pub notes: Option<String>, // N1
 
-    abstract_: Option<String>,    // AB, N2
-    keywords: Vec<String>,        // KW
-    reprint: Option<String>,      // RP
-    availability: Option<String>, // AV
+    pub abstract_: Option<String>,    // AB, N2
+    pub keywords: Vec<String>,        // KW
+    pub reprint: Option<String>,      // RP
+    pub availability: Option<String>, // AV
 
-    start_page: Option<String>, // SP
-    end_page: Option<String>,   // EP
+    pub start_page: Option<String>, // SP
+    pub end_page: Option<String>,   // EP
 
-    journal: Option<String>,          // JF, JO
-    journal_abbrev: Option<String>,   // JA
-    journal_abbrev_1: Option<String>, // J1
-    journal_abbrev_2: Option<String>, // J2
+    pub journal: Option<String>,          // JF, JO
+    pub journal_abbrev: Option<String>,   // JA
+    pub journal_abbrev_1: Option<String>, // J1
+    pub journal_abbrev_2: Option<String>, // J2
 
-    volume: Option<String>,        // VL
-    issue: Option<String>,         // IS
-    city: Option<String>,          // CY
-    publisher: Option<String>,     // PB
-    serial_number: Option<String>, // SN
-    address: Option<String>,       // AD
+    pub volume: Option<String>,        // VL
+    pub issue: Option<String>,         // IS
+    pub city: Option<String>,          // CY
+    pub publisher: Option<String>,     // PB
+    pub serial_number: Option<String>, // SN
+    pub address: Option<String>,       // AD
 
-    user_1: Option<String>, // U1
-    user_2: Option<String>, // U2
-    user_3: Option<String>, // U3
-    user_4: Option<String>, // U4
-    user_5: Option<String>, // U5
+    pub user_1: Option<String>, // U1
+    pub user_2: Option<String>, // U2
+    pub user_3: Option<String>, // U3
+    pub user_4: Option<String>, // U4
+    pub user_5: Option<String>, // U5
 
-    misc_1: Option<String>, // M1
-    misc_2: Option<String>, // M2
-    misc_3: Option<String>, // M3
+    pub misc_1: Option<String>, // M1
+    pub misc_2: Option<String>, // M2
+    pub misc_3: Option<String>, // M3
 }
 
 impl Entry {
